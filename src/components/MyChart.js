@@ -7,7 +7,8 @@ function MyChart({width, height}) {
     const innerWidth = width - 2 * padding.x;
     const innerHeight = height - 2 * padding.y;
 
-    const N = 500;
+    const N = 100;
+    const maxAmount = 100;
 
     return (
         <>
@@ -19,14 +20,15 @@ function MyChart({width, height}) {
                     left={padding.x}
                     width={innerWidth}
                     height={innerHeight}
-                    N={N}
+                    pointCount={N}
+                    maxAmount={maxAmount}
                 />
                 <VolumeGrid
                     top={padding.y}
                     left={padding.x}
                     width={innerWidth}
                     height={innerHeight}
-                    maxX={N}
+                    maxX={maxAmount}
                 />
             </svg>
         </>
