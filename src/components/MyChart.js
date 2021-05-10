@@ -21,7 +21,7 @@ function MyChart({width, height}) {
                     width={innerWidth}
                     height={innerHeight}
                     pointCount={N}
-                    maxAmount={maxAmount}
+                    maxPossibleAmount={maxAmount}
                 />
                 <VolumeGrid
                     top={padding.y}
