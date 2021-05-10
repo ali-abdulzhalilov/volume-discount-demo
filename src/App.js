@@ -5,7 +5,7 @@ function App() {
   return (
     <div className="App">
       <header className="App-header">
-          <MyChart width={600} height={300} />
+          <MyChart width={500} height={400} />
       </header>
     </div>
   );

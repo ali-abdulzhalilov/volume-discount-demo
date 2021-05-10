@@ -1,4 +1,4 @@
-import React, {useEffect, useState, useCallback} from 'react';
+import React, {useEffect, useState} from 'react';
 import {LinePath} from "@visx/shape";
 import {curveLinear} from "@visx/curve";
 import {scaleLinear} from '@visx/scale';
@@ -6,21 +6,17 @@ import {HorizontalSlider} from "../components";
 import PointAdjuster from "./PointAdjuster";
 
 const poly = (a, b, c, n, x) => a * Math.pow(x + b, n) + c;
-const fun = (x) => poly(0.01, 0, 5, 1.8, x);
+const fun = (x) => poly(0.1, 0, 0, 1.5, x);
 
 function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmount}) {
 
     const xScale = scaleLinear({range: [0, width], domain: [0, maxPossibleAmount]});
     const yScale = scaleLinear({range: [height, 0], domain: [0, 100]});
 
-    const getXValue = useCallback((value) => (value - left) / width * maxPossibleAmount, [maxPossibleAmount, width, left]);
-    const getYValue = useCallback((value) => (1-(value - top) / height), [height, top]);
-
-    const [maxAmount, setMaxAmount] = useState(120);
+    const [maxAmount, setMaxAmount] = useState(maxPossibleAmount-10);
     const [maxDiscount, setMaxDiscount] = useState(fun(maxAmount));
     useEffect(() => setMaxDiscount(fun(maxAmount)), [maxAmount]);
-
-    const [minAmount, setMinAmount] = useState(40);
+    const [minAmount, setMinAmount] = useState(10);
 
     const funLimited = (x) => x < minAmount ? 0 : Math.max(Math.min(fun(x), maxDiscount), 0);
 
@@ -29,25 +25,10 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
 
     const [middlePoint, setMiddlePoint] = useState({
         x: minAmount + (maxAmount - minAmount) / 2,
-        y: funLimited(minAmount) + (funLimited(maxAmount) - funLimited(minAmount)) / 2
+        y: 0.5
     });
-    useEffect(() => console.log(middlePoint), [middlePoint]);
+    // useEffect(() => console.log(middlePoint), [middlePoint]);
 
-    // -----
-
-    const [maxX, setMaxX] = useState(xScale(maxAmount) + left);
-    useEffect(() => setMaxAmount(getXValue(maxX)), [getXValue, maxX]);
-
-    const [minX, setMinX] = useState(xScale(minAmount) + left);
-    useEffect(() => setMinAmount(getXValue(minX)), [getXValue, minX]);
-
-    const [middleValue, setMiddleValue] = useState({x: xScale(middlePoint.x), y: yScale(middlePoint.y)});
-    useEffect(() => setMiddlePoint({
-        x: getXValue(middleValue.x),
-        y: getYValue(middleValue.y)
-    }), [getXValue, middleValue, getYValue]);
-
-    // -----
 
     return (
         <>
@@ -67,8 +48,8 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
                 left={left}
                 width={width}
                 height={height}
-                value={maxX}
-                onDrag={(c) => setMaxX(c.x + c.dx)}
+                value={xScale(maxAmount)+left}
+                onDrag={(c) => setMaxAmount(xScale.invert(c.x + c.dx - left))}
             />
 
             <HorizontalSlider
@@ -76,8 +57,8 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
                 left={left}
                 width={width}
                 height={height}
-                value={minX}
-                onDrag={(c) => setMinX(c.x + c.dx)}
+                value={xScale(minAmount)+left}
+                onDrag={(c) => setMinAmount(xScale.invert(c.x + c.dx - left))}
             />
 
             <PointAdjuster
@@ -85,8 +66,11 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
                 left={left}
                 width={width}
                 height={height}
-                value={middleValue}
-                onDrag={(c) => setMiddleValue({x: c.x + c.dx, y: c.y + c.dy})}
+                value={{x: xScale(middlePoint.x)+left, y: yScale(middlePoint.y)}}
+                onDrag={(c) => setMiddlePoint({
+                    x: xScale.invert(c.x + c.dx - left),
+                    y: yScale.invert(c.y + c.dy)
+                })}
             />
         </>
     );

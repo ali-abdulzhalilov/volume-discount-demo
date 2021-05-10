@@ -3,12 +3,12 @@ import {SmoothVolumeChart, VolumeGrid} from "../components";
 
 function MyChart({width, height}) {
 
-    const padding = {x: 50, y: 30};
+    const padding = {x: 100, y: 50};
     const innerWidth = width - 2 * padding.x;
     const innerHeight = height - 2 * padding.y;
 
-    const N = 100;
-    const maxAmount = 200;
+    const N = 200;
+    const maxAmount = 100;
 
     return (
         <>
