@@ -1,17 +1,18 @@
-import React from 'react';
+import React, {useEffect, useState, useCallback} from 'react';
 import {LinePath, Line} from "@visx/shape";
 import {curveLinear} from "@visx/curve";
 import {scaleLinear} from '@visx/scale';
-import {useDrag} from '@visx/drag';
+import {Drag} from '@visx/drag';
 
 function SmoothVolumeChart({top, left, width, height, pointCount, maxAmount}) {
 
     const poly = (a, b, c, n, x) => a * Math.pow(x + b, n) + c;
+    const fun = useCallback((x) => poly(0.01, 0, 0, 1.9, x), []);
 
-    const fun = (x) => poly(0.01, 0, 0, 2, x);
-
-    const max = {x: 70, y: fun(70)};
-    const funWithLimit = (x) => Math.min(fun(x), max.y);
+    const [maxX, setMaxX] = useState(70);
+    const [maxY, setMaxY] = useState(fun(maxX));
+    useEffect(() => {setMaxY(fun(maxX))}, [fun, maxX]);
+    const funWithLimit = (x) => Math.min(fun(x), maxY);
 
     const dn = maxAmount/pointCount;
     const data = Array.from({length: pointCount}, (x, i) => ({x: i*dn, y: funWithLimit(i*dn)}));
@@ -27,17 +28,11 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxAmount}) {
 
     // -----
 
-    const onDragStart = c => console.log(c);
-    const onDragEnd = c => console.log(c);
-    const onDragMove = c => console.log(c);
+    const [xx, setXX] = useState(xScale(maxX)+left);
+    const [isDragging, setIsDragging] = useState(false);
+    const getValue = (value) => value/width*maxAmount;
 
-    const { x = 0, isDragging, dx, dragStart, dragEnd, dragMove } = useDrag({
-        x: xScale(50),
-        onDragStart,
-        onDragMove,
-        onDragEnd,
-        resetOnStart: true,
-    });
+    const onDrag = c => {setXX(c.x+c.dx); setIsDragging(c.isDragging); getValue(c.x+c.dx-left); setMaxX(getValue(c.x+c.dx-left))};
 
     // -----
 
@@ -53,33 +48,45 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxAmount}) {
                     stroke="#000"
                 />
 
+                <Drag
+                    x={xScale(maxX)+left}
+                    y={0}
+                    width={width}
+                    height={height}
+                    onDragStart={onDrag}
+                    onDragMove={onDrag}
+                    onDragEnd={onDrag}
+                >
+                    {({ dragStart, dragEnd, dragMove, isDragging, x, dx }) => (
+                        <rect
+                            key={`dot-single`}
+                            x={x-5-left}
+                            y={0}
+                            width={10}
+                            height={height}
+                            fill={"transparent"}
+                            transform={`translate(${dx}, 0)`}
+                            fillOpacity={0.9}
+                            stroke={isDragging ? "transparent" : "#eee"}
+                            strokeWidth={1}
+                            onMouseMove={dragMove}
+                            onMouseUp={dragEnd}
+                            onMouseDown={dragStart}
+                            onTouchStart={dragStart}
+                            onTouchMove={dragMove}
+                            onTouchEnd={dragEnd}
+                        />
+                    )}
+                </Drag>
+
                 <Line
-                    from={{x: xScale(max.x), y: 0}}
-                    to={{x: xScale(max.x), y: height}}
+                    from={{x: xx-left, y: 0}}
+                    to={{x: xx-left, y: height}}
                     stroke="#f66"
-                    strokeWidth={2}
+                    strokeWidth={isDragging ? 2 : 1}
                     pointerEvents="none"
                 />
             </g>
-
-            <rect
-                x={x-50}
-                y={top}
-                width={100}
-                height={height}
-                onMouseDown={dragStart}
-                onMouseMove={dragMove}
-                onMouseUp={dragEnd}
-                fill="transparent"
-            />
-            <Line
-                from={{x: x, y: top}}
-                to={{x: x, y: top+height}}
-                stroke="#f66"
-                strokeWidth={isDragging ? 2 : 1}
-                transform={`translate(${dx}, 0)`}
-            />
-
         </>
     );
 }

@@ -8,7 +8,7 @@ function MyChart({width, height}) {
     const innerHeight = height - 2 * padding.y;
 
     const N = 100;
-    const maxAmount = 100;
+    const maxAmount = 200;
 
     return (
         <>
