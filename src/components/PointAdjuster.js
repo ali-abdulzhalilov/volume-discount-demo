@@ -1,30 +1,29 @@
 import React from 'react';
 import {Drag} from "@visx/drag";
-import {Line} from "@visx/shape";
 
-function HorizontalSlider({top, left, width, height, value, onDrag}) {
+const radius = 10;
+
+function PointAdjuster({top, left, width, height, value, onDrag}) {
     return (
         <>
             <g transform={`translate(${left},${top})`}>
                 <Drag
-                    x={value}
-                    y={0}
+                    x={value.x}
+                    y={value.y}
                     width={width}
                     height={height}
                     onDragStart={onDrag}
                     onDragMove={onDrag}
                     onDragEnd={onDrag}
                 >
-                    {({dragStart, dragEnd, dragMove, isDragging, x, dx}) => (
+                    {({dragStart, dragEnd, dragMove, isDragging, x, y, dx, dy}) => (
                         <>
-                            <rect
-                                key={`dot-single`}
-                                x={x - 5 - left}
-                                y={0}
-                                width={10}
-                                height={height}
+                            <circle
+                                cx={x-left}
+                                cy={y-top}
+                                r={radius}
                                 fill={"transparent"}
-                                transform={`translate(${dx}, 0)`}
+                                transform={`translate(${dx}, ${dy})`}
                                 fillOpacity={0.9}
                                 stroke={isDragging ? "transparent" : "#eee"}
                                 strokeWidth={1}
@@ -35,12 +34,17 @@ function HorizontalSlider({top, left, width, height, value, onDrag}) {
                                 onTouchMove={dragMove}
                                 onTouchEnd={dragEnd}
                             />
-                            <Line
-                                from={{x: x - left, y: 0}}
-                                to={{x: x - left, y: height}}
-                                stroke="#f66"
-                                strokeWidth={isDragging ? 2 : 1}
-                                pointerEvents="none"
+                            <circle
+                                cx={value.x-left}
+                                cy={value.y-top}
+                                r={isDragging ? 2 : 1}
+                                fill={'#f00'}
+                                onMouseMove={dragMove}
+                                onMouseUp={dragEnd}
+                                onMouseDown={dragStart}
+                                onTouchStart={dragStart}
+                                onTouchMove={dragMove}
+                                onTouchEnd={dragEnd}
                             />
                         </>
                     )}
@@ -50,4 +54,4 @@ function HorizontalSlider({top, left, width, height, value, onDrag}) {
     );
 }
 
-export default HorizontalSlider;
+export default PointAdjuster;
