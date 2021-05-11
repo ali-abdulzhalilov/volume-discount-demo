@@ -8,6 +8,24 @@ import PointAdjuster from "./PointAdjuster";
 const poly = (a, b, c, n, x) => a * Math.pow(x + b, n) + c;
 const fun = (x) => poly(0.1, 0, 0, 1.5, x);
 
+const interpolate = (points, x) => {
+    let res = 0;
+
+    for (let i = 0; i < points.length; i++) {
+        let term = points[i].y;
+
+        for (let j = 0; j < points.length; j++) {
+            if (j !== i) {
+                term = term*(x - points[j].x) / (points[i].x - points[j].x);
+            }
+        }
+
+        res += term;
+    }
+
+    return res;
+}
+
 function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmount}) {
 
     const xScale = scaleLinear({range: [0, width], domain: [0, maxPossibleAmount]});
@@ -20,10 +38,6 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
     const [minAmount, setMinAmount] = useState(10);
     const [minPoint, setMinPoint] = useState({x: minAmount, y: fun(minAmount)});
     useEffect(() => setMinPoint({x: minAmount, y: fun(minAmount)}), [minAmount]);
-    const funLimited = (x) => x < minAmount ? 0 : Math.max(Math.min(fun(x), maxPoint.y), 0);
-
-    const dn = maxPossibleAmount / pointCount;
-    const data = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: funLimited(i * dn)}));
 
     const [middlePoint, setMiddlePoint] = useState({
         x: minAmount + (maxAmount - minAmount) * 0.25,
@@ -34,12 +48,23 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
         x: minAmount + (maxAmount - minAmount) * 0.75,
         y: 0.5
     });
-    // useEffect(() => console.log(middlePoint), [middlePoint]);
-
-    // -----
 
     const [points, setPoints] = useState([minPoint, middlePoint, upperMiddlePoint, maxPoint]);
     useEffect(() => setPoints([minPoint, middlePoint, upperMiddlePoint, maxPoint]), [setPoints, minPoint, maxPoint, middlePoint, upperMiddlePoint]);
+
+
+    const funLimited = (x) => x < minAmount ? 0 : Math.max(Math.min(fun(x), maxPoint.y), 0);
+    const interpolateLimited = (x) => x < minAmount ? 0 : (x > maxAmount ? maxPoint.y : (Math.max(Math.min(interpolate(points, x), maxPoint.y), minPoint.y)));
+
+    const dn = maxPossibleAmount / pointCount;
+    const data = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: funLimited(i * dn)}));
+    const data2 = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: interpolateLimited(i*dn)}));
+
+
+
+    // useEffect(() => console.log(middlePoint), [middlePoint]);
+
+    // -----
 
     const lines = [];
     for (let i = 0; i < points.length - 1; i++) {
@@ -47,12 +72,15 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
         const two = points[i+1];
         const line = (
             <Line
+                key={`line-${i}`}
                 from={{x: xScale(one.x)+left, y: yScale(one.y)+top}}
                 to={{x: xScale(two.x)+left, y: yScale(two.y)+top}}
                 stroke={"#0f0"}
             />);
         lines.push(line);
     }
+
+
 
     // -----
 
@@ -63,6 +91,15 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
                 <LinePath
                     curve={curveLinear}
                     data={data}
+                    x={(d) => xScale(d.x) ?? 0}
+                    y={(d) => yScale(d.y) ?? 0}
+                    strokeWidth={2}
+                    stroke="#000"
+                />
+
+                <LinePath
+                    curve={curveLinear}
+                    data={data2}
                     x={(d) => xScale(d.x) ?? 0}
                     y={(d) => yScale(d.y) ?? 0}
                     strokeWidth={2}
