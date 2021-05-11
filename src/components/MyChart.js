@@ -7,7 +7,7 @@ function MyChart({width, height}) {
     const innerWidth = width - 2 * padding.x;
     const innerHeight = height - 2 * padding.y;
 
-    const N = 200;
+    const N = 100;
     const maxAmount = 100;
 
     return (

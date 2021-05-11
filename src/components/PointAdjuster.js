@@ -16,14 +16,13 @@ function PointAdjuster({top, left, width, height, value, onDrag}) {
                     onDragMove={onDrag}
                     onDragEnd={onDrag}
                 >
-                    {({dragStart, dragEnd, dragMove, isDragging, x, y, dx, dy}) => (
+                    {({dragStart, dragEnd, dragMove, isDragging}) => (
                         <>
                             <circle
-                                cx={x-left}
-                                cy={y-top}
+                                cx={value.x-left}
+                                cy={value.y-top}
                                 r={radius}
                                 fill={"transparent"}
-                                transform={`translate(${dx}, ${dy})`}
                                 fillOpacity={0.9}
                                 stroke={isDragging ? "transparent" : "#eee"}
                                 strokeWidth={1}
