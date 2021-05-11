@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {LinePath} from "@visx/shape";
+import {Line, LinePath} from "@visx/shape";
 import {curveLinear} from "@visx/curve";
 import {scaleLinear} from '@visx/scale';
 import {HorizontalSlider} from "../components";
@@ -14,20 +14,47 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
     const yScale = scaleLinear({range: [height, 0], domain: [0, 100]});
 
     const [maxAmount, setMaxAmount] = useState(maxPossibleAmount-10);
-    const [maxDiscount, setMaxDiscount] = useState(fun(maxAmount));
-    useEffect(() => setMaxDiscount(fun(maxAmount)), [maxAmount]);
-    const [minAmount, setMinAmount] = useState(10);
+    const [maxPoint, setMaxPoint] = useState({x: maxAmount, y: fun(maxAmount)});
+    useEffect(() => setMaxPoint({x: maxAmount, y: fun(maxAmount)}), [maxAmount]);
 
-    const funLimited = (x) => x < minAmount ? 0 : Math.max(Math.min(fun(x), maxDiscount), 0);
+    const [minAmount, setMinAmount] = useState(10);
+    const [minPoint, setMinPoint] = useState({x: minAmount, y: fun(minAmount)});
+    useEffect(() => setMinPoint({x: minAmount, y: fun(minAmount)}), [minAmount]);
+    const funLimited = (x) => x < minAmount ? 0 : Math.max(Math.min(fun(x), maxPoint.y), 0);
 
     const dn = maxPossibleAmount / pointCount;
     const data = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: funLimited(i * dn)}));
 
     const [middlePoint, setMiddlePoint] = useState({
-        x: minAmount + (maxAmount - minAmount) / 2,
+        x: minAmount + (maxAmount - minAmount) * 0.25,
+        y: 0.5
+    });
+
+    const [upperMiddlePoint, setUpperMiddlePoint] = useState({
+        x: minAmount + (maxAmount - minAmount) * 0.75,
         y: 0.5
     });
     // useEffect(() => console.log(middlePoint), [middlePoint]);
+
+    // -----
+
+    const [points, setPoints] = useState([minPoint, middlePoint, upperMiddlePoint, maxPoint]);
+    useEffect(() => setPoints([minPoint, middlePoint, upperMiddlePoint, maxPoint]), [setPoints, minPoint, maxPoint, middlePoint, upperMiddlePoint]);
+
+    const lines = [];
+    for (let i = 0; i < points.length - 1; i++) {
+        const one = points[i];
+        const two = points[i+1];
+        const line = (
+            <Line
+                from={{x: xScale(one.x)+left, y: yScale(one.y)+top}}
+                to={{x: xScale(two.x)+left, y: yScale(two.y)+top}}
+                stroke={"#0f0"}
+            />);
+        lines.push(line);
+    }
+
+    // -----
 
 
     return (
@@ -48,7 +75,7 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
                 left={left}
                 width={width}
                 height={height}
-                value={xScale(maxAmount)+left}
+                value={xScale(maxPoint.x)+left}
                 onDrag={(c) => setMaxAmount(xScale.invert(c.x + c.dx - left))}
             />
 
@@ -66,12 +93,32 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
                 left={left}
                 width={width}
                 height={height}
-                value={{x: xScale(middlePoint.x)+left, y: yScale(middlePoint.y)}}
+                value={{x: xScale(middlePoint.x)+left, y: yScale(middlePoint.y)+top}}
                 onDrag={(c) => setMiddlePoint({
                     x: xScale.invert(c.x + c.dx - left),
-                    y: yScale.invert(c.y + c.dy)
+                    y: yScale.invert(c.y + c.dy - top)
                 })}
             />
+
+            <PointAdjuster
+                top={top}
+                left={left}
+                width={width}
+                height={height}
+                value={{x: xScale(upperMiddlePoint.x)+left, y: yScale(upperMiddlePoint.y)+top}}
+                onDrag={(c) => setUpperMiddlePoint({
+                    x: xScale.invert(c.x + c.dx - left),
+                    y: yScale.invert(c.y + c.dy - top)
+                })}
+            />
+
+            <Line
+                from={{x: xScale(minPoint.x)+left, y: yScale(minPoint.y)+top}}
+                to={{x: xScale(maxPoint.x)+left, y: yScale(maxPoint.y)+top}}
+                stroke={"#0f0"}
+            />
+
+            {lines}
         </>
     );
 }
