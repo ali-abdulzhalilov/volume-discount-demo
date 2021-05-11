@@ -61,12 +61,13 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
     const funLimited = (x) => x < minAmount ? 0 : Math.max(Math.min(fun(x), maxPoint.y), 0);
     // const interpolateLimited = (x) => x < minAmount ? 0 : (x > maxAmount ? maxPoint.y : (Math.max(Math.min(interpolate(points, x), maxPoint.y), minPoint.y)));
     const interpolateLimited = (x) => {
-        const closestPoint = Array.of(...points).reverse().find(d => d.x < x) ?? {y: 0};
-        return x < minAmount ? 0 : Math.min(Math.max(interpolate(points, x), closestPoint.y), maxPoint.y);
+        const closestPointRight = Array.of(...points).reverse().find(d => d.x < x) ?? {y: 0};
+        const closestPointLeft = Array.of(...points).find(d => d.x > x) ?? {y: interpolate(points, x)};
+        return x < minAmount ? 0 : Math.min(Math.min(Math.max(interpolate(points, x), closestPointRight.y), closestPointLeft.y), maxPoint.y); // ehmmm...
     };
 
     const dn = maxPossibleAmount / pointCount;
-    const data = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: funLimited(i * dn)}));
+    // const data = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: funLimited(i * dn)}));
     const data2 = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: interpolateLimited(i*dn)}));
 
 
@@ -94,14 +95,14 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
     return (
         <>
             <g transform={`translate(${left},${top})`}>
-                <LinePath
-                    curve={curveLinear}
-                    data={data}
-                    x={(d) => xScale(d.x) ?? 0}
-                    y={(d) => yScale(d.y) ?? 0}
-                    strokeWidth={2}
-                    stroke="#000"
-                />
+                {/*<LinePath*/}
+                {/*    curve={curveLinear}*/}
+                {/*    data={data}*/}
+                {/*    x={(d) => xScale(d.x) ?? 0}*/}
+                {/*    y={(d) => yScale(d.y) ?? 0}*/}
+                {/*    strokeWidth={2}*/}
+                {/*    stroke="#000"*/}
+                {/*/>*/}
 
                 <LinePath
                     curve={curveLinear}
