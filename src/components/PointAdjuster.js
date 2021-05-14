@@ -24,7 +24,7 @@ function PointAdjuster({top, left, width, height, value, onDrag}) {
                                 r={radius}
                                 fill={"transparent"}
                                 fillOpacity={0.9}
-                                stroke={isDragging ? "transparent" : "#eee"}
+                                stroke={isDragging ? "#eee" : "#f00"}
                                 strokeWidth={1}
                                 onMouseMove={dragMove}
                                 onMouseUp={dragEnd}
