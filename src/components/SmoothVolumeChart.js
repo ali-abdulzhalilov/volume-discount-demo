@@ -2,11 +2,7 @@ import React, {useEffect, useState} from 'react';
 import {Line, LinePath} from "@visx/shape";
 import {curveLinear} from "@visx/curve";
 import {scaleLinear} from '@visx/scale';
-import {HorizontalSlider} from "../components";
-import PointAdjuster from "./PointAdjuster";
-
-const poly = (a, b, c, n, x) => a * Math.pow(x + b, n) + c;
-const fun = (x) => poly(0.1, 0, 0, 1.5, x);
+import {PointAdjuster} from "../components";
 
 const interpolate = (points, x) => {
     let res = 0;
@@ -16,7 +12,7 @@ const interpolate = (points, x) => {
 
         for (let j = 0; j < points.length; j++) {
             if (j !== i) {
-                term = term*(x - points[j].x) / (points[i].x - points[j].x);
+                term = term * (x - points[j].x) / (points[i].x - points[j].x);
             }
         }
 
@@ -25,6 +21,8 @@ const interpolate = (points, x) => {
 
     return res;
 }
+
+const update = (arr, ind, val) => [...arr.slice(0, ind), val, ...arr.slice(ind + 1, arr.length)];
 
 const setWithLimit = (point, lowerPoint = point, higherPoint = point) => ({
     x: Math.min(Math.max(point.x, lowerPoint.x), higherPoint.x),
@@ -36,37 +34,38 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
     const xScale = scaleLinear({range: [0, width], domain: [0, maxPossibleAmount]});
     const yScale = scaleLinear({range: [height, 0], domain: [0, 100]});
 
-    let [middlePoint, setMiddlePoint] = useState({
-        x: maxPossibleAmount * 0.25,
-        y: 50
-    });
-    //
-    // let [upperMiddlePoint, setUpperMiddlePoint] = useState({
-    //     x: maxPossibleAmount * 0.75,
-    //     y: 50
-    // });
+    const [pointA, setPointA] = useState({x: 0, y: 0});
+    const [pointB, setPointB] = useState({x: 100, y: 100});
 
-    const [minAmount, setMinAmount] = useState(10);
-    let [minPoint, setMinPoint] = useState({x: minAmount, y: fun(minAmount)});
-    useEffect(() => setMinPoint(setWithLimit({x: minAmount, y: fun(minAmount)}, {x: 0, y: 0}, middlePoint)), [minAmount, middlePoint]);
+    const N = 2;
+    const [points, setPoints] = useState([
+        pointA,
+        ...Array.from({length: N}, (x, i) => ({
+            x: 100 / (N + 1) * (i + 1),
+            y: 100 / (N + 1) * (i + 1)
+        })),
+        pointB]);
+    useEffect(() => setPointA(points[0]), [points]);
+    useEffect(() => setPointB(points[points.length-1]), [points]);
 
-    const [maxAmount, setMaxAmount] = useState(maxPossibleAmount-10);
-    let [maxPoint, setMaxPoint] = useState({x: maxAmount, y: fun(maxAmount)});
-    useEffect(() => setMaxPoint(setWithLimit({x: maxAmount, y: fun(maxAmount)}, middlePoint)), [maxAmount, middlePoint]);
-
-    const [points, setPoints] = useState([minPoint, middlePoint, maxPoint]);
-    useEffect(() => setPoints([minPoint, middlePoint, maxPoint]), [setPoints, minPoint, maxPoint, middlePoint]);
-    
-    // const interpolateLimited = (x) => x < minAmount ? 0 : (x > maxAmount ? maxPoint.y : (Math.max(Math.min(interpolate(points, x), maxPoint.y), minPoint.y)));
     const interpolateLimited = (x) => {
+        let y = interpolate(points, x);
+
         const closestPointRight = Array.of(...points).reverse().find(d => d.x < x) ?? {y: 0};
         const closestPointLeft = Array.of(...points).find(d => d.x > x) ?? {y: interpolate(points, x)};
-        return x < minAmount ? 0 : Math.min(Math.min(Math.max(interpolate(points, x), closestPointRight.y), closestPointLeft.y), maxPoint.y); // ehmmm...
+
+        y = Math.min(Math.max(y, closestPointRight.y), closestPointLeft.y)
+
+        const firstPoint = pointA;
+        const lastPoint = pointB;
+
+        y = x < firstPoint.x ? 0 : (x > lastPoint.x ? lastPoint.y : y);
+
+        return y;
     };
 
     const dn = maxPossibleAmount / pointCount;
-    // const data = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: funLimited(i * dn)}));
-    const data2 = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: interpolateLimited(i*dn)}));
+    const data = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: interpolateLimited(i * dn)}));
 
 
     // -----
@@ -74,17 +73,43 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
     const lines = [];
     for (let i = 0; i < points.length - 1; i++) {
         const one = points[i];
-        const two = points[i+1];
+        const two = points[i + 1];
         const line = (
             <Line
                 key={`line-${i}`}
-                from={{x: xScale(one.x)+left, y: yScale(one.y)+top}}
-                to={{x: xScale(two.x)+left, y: yScale(two.y)+top}}
+                from={{x: xScale(one.x) + left, y: yScale(one.y) + top}}
+                to={{x: xScale(two.x) + left, y: yScale(two.y) + top}}
                 stroke={"#0f0"}
             />);
         lines.push(line);
     }
 
+    const adjusters = [];
+    for (let i = 0; i < points.length; i++) {
+        const adjuster = (
+            <PointAdjuster
+                top={top}
+                left={left}
+                width={width}
+                height={height}
+                value={{x: xScale(points[i].x) + left, y: yScale(points[i].y) + top}}
+                onDrag={(c) => setPoints(
+                    update(points, i,
+                        setWithLimit({
+                                x: xScale.invert(c.x + c.dx - left),
+                                y: yScale.invert(c.y + c.dy - top)
+                            },
+                            i < 1 ? {x: 0, y: 0} : {x: points[i - 1].x + 1, y: points[i - 1].y + 0.01},
+                            i >= points.length - 1 ? {x: points[i].x + 100, y: 100} : {
+                                x: points[i + 1].x - 1,
+                                y: points[i + 1].y - 0.01
+                            })
+                    )
+                )}
+            />
+        );
+        adjusters.push(adjuster);
+    }
 
 
     // -----
@@ -93,18 +118,9 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
     return (
         <>
             <g transform={`translate(${left},${top})`}>
-                {/*<LinePath*/}
-                {/*    curve={curveLinear}*/}
-                {/*    data={data}*/}
-                {/*    x={(d) => xScale(d.x) ?? 0}*/}
-                {/*    y={(d) => yScale(d.y) ?? 0}*/}
-                {/*    strokeWidth={2}*/}
-                {/*    stroke="#000"*/}
-                {/*/>*/}
-
                 <LinePath
                     curve={curveLinear}
-                    data={data2}
+                    data={data}
                     x={(d) => xScale(d.x) ?? 0}
                     y={(d) => yScale(d.y) ?? 0}
                     strokeWidth={2}
@@ -112,47 +128,7 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
                 />
             </g>
 
-            <HorizontalSlider
-                top={top}
-                left={left}
-                width={width}
-                height={height}
-                value={xScale(maxPoint.x)+left}
-                onDrag={(c) => setMaxAmount(xScale.invert(c.x + c.dx - left))}
-            />
-
-            <HorizontalSlider
-                top={top}
-                left={left}
-                width={width}
-                height={height}
-                value={xScale(minAmount)+left}
-                onDrag={(c) => setMinAmount(xScale.invert(c.x + c.dx - left))}
-            />
-
-            <PointAdjuster
-                top={top}
-                left={left}
-                width={width}
-                height={height}
-                value={{x: xScale(middlePoint.x)+left, y: yScale(middlePoint.y)+top}}
-                onDrag={(c) => setMiddlePoint(setWithLimit( {
-                    x: xScale.invert(c.x + c.dx - left),
-                    y: yScale.invert(c.y + c.dy - top)
-                }, minPoint, maxPoint))}
-            />
-
-            {/*<PointAdjuster*/}
-            {/*    top={top}*/}
-            {/*    left={left}*/}
-            {/*    width={width}*/}
-            {/*    height={height}*/}
-            {/*    value={{x: xScale(upperMiddlePoint.x)+left, y: yScale(upperMiddlePoint.y)+top}}*/}
-            {/*    onDrag={(c) => setUpperMiddlePoint(setWithLimit( {*/}
-            {/*        x: xScale.invert(c.x + c.dx - left),*/}
-            {/*        y: yScale.invert(c.y + c.dy - top)*/}
-            {/*    }, middlePoint, maxPoint))}*/}
-            {/*/>*/}
+            {adjusters}
 
             {lines}
         </>

@@ -1,7 +1,7 @@
 import React from 'react';
 import {Drag} from "@visx/drag";
 
-const radius = 10;
+const radius = 5;
 
 function PointAdjuster({top, left, width, height, value, onDrag}) {
     return (
@@ -21,23 +21,9 @@ function PointAdjuster({top, left, width, height, value, onDrag}) {
                             <circle
                                 cx={value.x-left}
                                 cy={value.y-top}
-                                r={radius}
-                                fill={"transparent"}
-                                fillOpacity={0.9}
-                                stroke={isDragging ? "#eee" : "#f00"}
-                                strokeWidth={1}
-                                onMouseMove={dragMove}
-                                onMouseUp={dragEnd}
-                                onMouseDown={dragStart}
-                                onTouchStart={dragStart}
-                                onTouchMove={dragMove}
-                                onTouchEnd={dragEnd}
-                            />
-                            <circle
-                                cx={value.x-left}
-                                cy={value.y-top}
-                                r={isDragging ? 2 : 1}
-                                fill={'#f00'}
+                                r={isDragging ? radius + 4 : radius}
+                                fill={'transparent'}
+                                stroke={'#f00'}
                                 onMouseMove={dragMove}
                                 onMouseUp={dragEnd}
                                 onMouseDown={dragStart}
