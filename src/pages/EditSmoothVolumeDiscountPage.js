@@ -27,7 +27,7 @@ function EditSmoothVolumeDiscountPage() {
     const yScale = scaleLinear({range: [innerHeight, 0], domain: [0, maxDiscount]});
 
     const pointA = {x: 10, y: 0.1};
-    const pointB = {x: maxAmount-10, y: maxDiscount-0.1};
+    const pointB = {x: maxAmount - 10, y: maxDiscount - 0.1};
 
     const generatePoints = (count) => Array.from({length: count}, (x, i) => ({
         x: maxAmount / (count + 1) * (i + 1),
@@ -46,8 +46,14 @@ function EditSmoothVolumeDiscountPage() {
     useEffect(() => setRatioPoints(points.map(item => getRatio(item, pointA, pointB))), [points]);
 
     const dn = maxAmount / N;
-    const data = Array.from({length: N}, (x, i) => ({x: i * dn, y: interpolateLimited([].concat(pointA, ...points, pointB), i * dn)}));
-    const data2 = Array.from({length: N}, (x, i) => ({x: i * dn, y: interpolate([].concat(pointA, ...points, pointB), i * dn)}));
+    const data = Array.from({length: N}, (x, i) => ({
+        x: i * dn,
+        y: interpolateLimited([].concat(pointA, ...points, pointB), i * dn)
+    }));
+    const data2 = Array.from({length: N}, (x, i) => ({
+        x: i * dn,
+        y: interpolate([].concat(pointA, ...points, pointB), i * dn)
+    }));
 
     const adjusters = [];
     for (let i = 0; i < points.length; i++) {
@@ -65,7 +71,10 @@ function EditSmoothVolumeDiscountPage() {
                                 x: xScale.invert(c.x + c.dx - padding.x),
                                 y: yScale.invert(c.y + c.dy - padding.y)
                             },
-                            i < 1 ? {x: pointA.x + 1, y: pointA.y} : {x: points[i - 1].x + 1, y: points[i - 1].y + 0.01},
+                            i < 1 ? {x: pointA.x + 1, y: pointA.y} : {
+                                x: points[i - 1].x + 1,
+                                y: points[i - 1].y + 0.01
+                            },
                             i >= points.length - 1 ? {x: pointB.x - 1, y: pointB.y} : {
                                 x: points[i + 1].x - 1,
                                 y: points[i + 1].y - 0.01
@@ -85,7 +94,8 @@ function EditSmoothVolumeDiscountPage() {
                         Point Count
                     </Form.Label>
                     <Col>
-                        <Form.Control value={pointCount} onChange={event => setPointCount(event.target.value.replace(/\D/,''))}/>
+                        <Form.Control value={pointCount}
+                                      onChange={event => setPointCount(event.target.value.replace(/\D/, ''))}/>
                     </Col>
                 </FormGroup>
                 <Row className="mt-2">
@@ -125,23 +135,23 @@ function EditSmoothVolumeDiscountPage() {
                                 {adjusters}
 
                                 <Line
-                                    from={{x: xScale(pointA.x)+padding.x, y:yScale(pointA.y)+padding.y}}
-                                    to={{x: xScale(pointA.x)+padding.x, y:yScale(pointB.y)+padding.y}}
+                                    from={{x: xScale(pointA.x) + padding.x, y: yScale(pointA.y) + padding.y}}
+                                    to={{x: xScale(pointA.x) + padding.x, y: yScale(pointB.y) + padding.y}}
                                     stroke="#f00"
                                 />
                                 <Line
-                                    from={{x: xScale(pointA.x)+padding.x, y:yScale(pointA.y)+padding.y}}
-                                    to={{x: xScale(pointB.x)+padding.x, y:yScale(pointA.y)+padding.y}}
+                                    from={{x: xScale(pointA.x) + padding.x, y: yScale(pointA.y) + padding.y}}
+                                    to={{x: xScale(pointB.x) + padding.x, y: yScale(pointA.y) + padding.y}}
                                     stroke="#f00"
                                 />
                                 <Line
-                                    from={{x: xScale(pointB.x)+padding.x, y:yScale(pointB.y)+padding.y}}
-                                    to={{x: xScale(pointA.x)+padding.x, y:yScale(pointB.y)+padding.y}}
+                                    from={{x: xScale(pointB.x) + padding.x, y: yScale(pointB.y) + padding.y}}
+                                    to={{x: xScale(pointA.x) + padding.x, y: yScale(pointB.y) + padding.y}}
                                     stroke="#f00"
                                 />
                                 <Line
-                                    from={{x: xScale(pointB.x)+padding.x, y:yScale(pointB.y)+padding.y}}
-                                    to={{x: xScale(pointB.x)+padding.x, y:yScale(pointA.y)+padding.y}}
+                                    from={{x: xScale(pointB.x) + padding.x, y: yScale(pointB.y) + padding.y}}
+                                    to={{x: xScale(pointB.x) + padding.x, y: yScale(pointA.y) + padding.y}}
                                     stroke="#f00"
                                 />
                             </svg>
@@ -150,7 +160,7 @@ function EditSmoothVolumeDiscountPage() {
                 </Row>
                 <FormGroup as={Row} className="mt-2">
                     <Col>
-                        <Form.Control type="text" value={pointsToString(ratioPoints)} readOnly />
+                        <Form.Control type="text" value={pointsToString(ratioPoints)} readOnly/>
                     </Col>
                 </FormGroup>
             </Container>
