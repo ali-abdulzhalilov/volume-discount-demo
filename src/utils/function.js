@@ -13,6 +13,11 @@ export const interpolate = (points, x) => {
         res += term;
     }
 
+    const firstPoint = points[0];
+    const lastPoint = points[points.length-1];
+
+    res = x < firstPoint.x ? 0 : (x > lastPoint.x ? lastPoint.y : res);
+
     return res;
 }
 
@@ -23,11 +28,6 @@ export const interpolateLimited = (points, x) => {
     const closestPointLeft = Array.of(...points).find(d => d.x > x) ?? {y: interpolate(points, x)};
 
     y = Math.min(Math.max(y, closestPointRight.y), closestPointLeft.y)
-
-    const firstPoint = points[0];
-    const lastPoint = points[points.length-1];
-
-    y = x < firstPoint.x ? 0 : (x > lastPoint.x ? lastPoint.y : y);
 
     return y;
 };

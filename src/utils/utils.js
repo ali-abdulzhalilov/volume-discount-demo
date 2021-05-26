@@ -6,5 +6,5 @@ export const setWithLimit = (point, lowerPoint = point, higherPoint = point) => 
 });
 
 export const pointsToString = (arr) => {
-    return arr.map(item => '{x:'+item.x+', y:'+item.y+'}').join(',');
+    return '['+arr.map(item => '{x:'+item.x+', y:'+item.y+'}').join(',')+']';
 };

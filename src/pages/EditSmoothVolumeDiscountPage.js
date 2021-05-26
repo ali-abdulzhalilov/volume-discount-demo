@@ -6,7 +6,7 @@ import Container from "react-bootstrap/Container";
 import FormGroup from "react-bootstrap/FormGroup";
 import Form from "react-bootstrap/Form";
 import {scaleLinear} from "@visx/scale";
-import {interpolateLimited} from "../utils/function";
+import {interpolateLimited, interpolate} from "../utils/function";
 import {LinePath, Line} from "@visx/shape";
 import {curveLinear} from "@visx/curve";
 import {update, setWithLimit, pointsToString} from "../utils/utils";
@@ -16,15 +16,13 @@ function EditSmoothVolumeDiscountPage() {
     const [pointCount, setPointCount] = useState(2);
     const maxAmount = 100;
     const maxDiscount = 1;
-    const N = 500;
+    const N = 250;
 
     const width = 800;
     const height = 400;
-
     const padding = {x: 50, y: 50};
     const innerWidth = width - 2 * padding.x;
     const innerHeight = height - 2 * padding.y;
-
     const xScale = scaleLinear({range: [0, innerWidth], domain: [0, maxAmount]});
     const yScale = scaleLinear({range: [innerHeight, 0], domain: [0, maxDiscount]});
 
@@ -47,10 +45,9 @@ function EditSmoothVolumeDiscountPage() {
     const [ratioPoints, setRatioPoints] = useState(points.map(item => getRatio(item, pointA, pointB)));
     useEffect(() => setRatioPoints(points.map(item => getRatio(item, pointA, pointB))), [points]);
 
-    useEffect(() => console.log(points), [points])
-
     const dn = maxAmount / N;
-    const data = Array.from({length: N}, (x, i) => ({x: i * dn, y: x < pointA.x ? 0 : (x > pointB.x ? pointB.y : interpolateLimited([].concat(pointA, ...points, pointB), i * dn))}));
+    const data = Array.from({length: N}, (x, i) => ({x: i * dn, y: interpolateLimited([].concat(pointA, ...points, pointB), i * dn)}));
+    const data2 = Array.from({length: N}, (x, i) => ({x: i * dn, y: interpolate([].concat(pointA, ...points, pointB), i * dn)}));
 
     const adjusters = [];
     for (let i = 0; i < points.length; i++) {
@@ -114,6 +111,14 @@ function EditSmoothVolumeDiscountPage() {
                                         y={(d) => yScale(d.y) ?? 0}
                                         strokeWidth={2}
                                         stroke="#000"
+                                    />
+                                    <LinePath
+                                        curve={curveLinear}
+                                        data={data2}
+                                        x={(d) => xScale(d.x) ?? 0}
+                                        y={(d) => yScale(d.y) ?? 0}
+                                        strokeWidth={1}
+                                        stroke="#F00"
                                     />
                                 </g>
 
