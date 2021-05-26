@@ -1,8 +1,8 @@
 import React, {useEffect, useState} from 'react';
-import {Line, LinePath} from "@visx/shape";
+import {LinePath} from "@visx/shape";
 import {curveLinear} from "@visx/curve";
 import {scaleLinear} from '@visx/scale';
-import {PointAdjuster} from "../components";
+import {PointAdjuster, VolumeGrid} from "../components";
 
 const interpolate = (points, x) => {
     let res = 0;
@@ -70,28 +70,13 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
 
     // -----
 
-    const lines = [];
-    for (let i = 0; i < points.length - 1; i++) {
-        const one = points[i];
-        const two = points[i + 1];
-        const line = (
-            <Line
-                key={`line-${i}`}
-                from={{x: xScale(one.x) + left, y: yScale(one.y) + top}}
-                to={{x: xScale(two.x) + left, y: yScale(two.y) + top}}
-                stroke={"#0f0"}
-            />);
-        lines.push(line);
-    }
-
     const adjusters = [];
     for (let i = 0; i < points.length; i++) {
         const adjuster = (
             <PointAdjuster
+                key={`adjuster-${i}`}
                 top={top}
                 left={left}
-                width={width}
-                height={height}
                 value={{x: xScale(points[i].x) + left, y: yScale(points[i].y) + top}}
                 onDrag={(c) => setPoints(
                     update(points, i,
@@ -117,6 +102,14 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
 
     return (
         <>
+            <VolumeGrid
+                top={top}
+                left={left}
+                width={width}
+                height={height}
+                maxX={maxPossibleAmount}
+            />
+
             <g transform={`translate(${left},${top})`}>
                 <LinePath
                     curve={curveLinear}
@@ -129,8 +122,6 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
             </g>
 
             {adjusters}
-
-            {lines}
         </>
     );
 }
