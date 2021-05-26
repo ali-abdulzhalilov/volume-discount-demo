@@ -3,15 +3,15 @@ import {Drag} from "@visx/drag";
 
 const radius = 10;
 
-function PointAdjuster({top, left, value, onDrag}) {
+function PointAdjuster({top, left, width, height, value, onDrag}) {
     return (
         <>
             <g transform={`translate(${left},${top})`}>
                 <Drag
                     x={value.x}
                     y={value.y}
-                    width="100%"
-                    height="100%"
+                    width={width}
+                    height={height}
                     onDragStart={onDrag}
                     // onDragMove={onDrag}
                     onDragEnd={onDrag}

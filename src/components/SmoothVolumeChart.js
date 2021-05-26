@@ -3,31 +3,8 @@ import {LinePath} from "@visx/shape";
 import {curveLinear} from "@visx/curve";
 import {scaleLinear} from '@visx/scale';
 import {PointAdjuster, VolumeGrid} from "../components";
-
-const interpolate = (points, x) => {
-    let res = 0;
-
-    for (let i = 0; i < points.length; i++) {
-        let term = points[i].y;
-
-        for (let j = 0; j < points.length; j++) {
-            if (j !== i) {
-                term = term * (x - points[j].x) / (points[i].x - points[j].x);
-            }
-        }
-
-        res += term;
-    }
-
-    return res;
-}
-
-const update = (arr, ind, val) => [...arr.slice(0, ind), val, ...arr.slice(ind + 1, arr.length)];
-
-const setWithLimit = (point, lowerPoint = point, higherPoint = point) => ({
-    x: Math.min(Math.max(point.x, lowerPoint.x), higherPoint.x),
-    y: Math.min(Math.max(point.y, lowerPoint.y), higherPoint.y)
-});
+import {interpolateLimited} from "../utils/function";
+import {update, setWithLimit} from "../utils/utils";
 
 function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmount}) {
 
@@ -48,25 +25,8 @@ function SmoothVolumeChart({top, left, width, height, pointCount, maxPossibleAmo
     useEffect(() => setPointA(points[0]), [points]);
     useEffect(() => setPointB(points[points.length-1]), [points]);
 
-    const interpolateLimited = (x) => {
-        let y = interpolate(points, x);
-
-        const closestPointRight = Array.of(...points).reverse().find(d => d.x < x) ?? {y: 0};
-        const closestPointLeft = Array.of(...points).find(d => d.x > x) ?? {y: interpolate(points, x)};
-
-        y = Math.min(Math.max(y, closestPointRight.y), closestPointLeft.y)
-
-        const firstPoint = pointA;
-        const lastPoint = pointB;
-
-        y = x < firstPoint.x ? 0 : (x > lastPoint.x ? lastPoint.y : y);
-
-        return y;
-    };
-
     const dn = maxPossibleAmount / pointCount;
-    const data = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: interpolateLimited(i * dn)}));
-
+    const data = Array.from({length: pointCount}, (x, i) => ({x: i * dn, y: interpolateLimited(points, i * dn)}));
 
     // -----
 
